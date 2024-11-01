@@ -1,0 +1,67 @@
+<multistatus xmlns="DAV:" xmlns:CR="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/">
+	<response>
+		<href>{{ url_path }}</href>
+		<propstat>
+			<prop>
+        {% if has_resourcetype %}
+          <resourcetype>
+            <CR:addressbook />
+            <collection />
+          </resourcetype>
+        {% endif %}
+        {% if has_displayname %}
+				  <displayname>{{ addressbook.title }} (django-contacts)</displayname>
+        {% endif %}
+        {% if has_user_principal %}
+          <current-user-principal>
+            <href>/ckarrie/current-user-principal/</href>
+          </current-user-principal>
+        {% endif %}
+        {% if has_user_privilege %}
+          <current-user-privilege-set>
+            <privilege>
+              <read />
+            </privilege>
+            <privilege>
+              <all />
+            </privilege>
+            <privilege>
+              <write />
+            </privilege>
+            <privilege>
+              <write-properties />
+            </privilege>
+            <privilege>
+              <write-content />
+            </privilege>
+          </current-user-privilege-set>
+        {% endif %}
+        {% if has_getctag %}
+          <getetag>"django-contacts-addressbook-{{ addressbook.pk }}"</getetag>
+          <CS:getctag>"django-contacts-addressbook-{{ addressbook.pk }}"</CS:getctag>
+        {% endif %}
+			</prop>
+			<status>HTTP/1.1 200 OK</status>
+		</propstat>
+	</response>
+  {% if has_getctag and contacts %}
+    {% for contact in contacts %}
+      <response>
+        <href>{{ url_path }}{{ contact.pk }}.vcf</href>
+        <propstat>
+          <prop>
+            <resourcetype />
+            <getetag>"{{ contact.pk }}"</getetag>
+          </prop>
+          <status>HTTP/1.1 200 OK</status>
+        </propstat>
+        <propstat>
+          <prop>
+            <CS:getctag />
+          </prop>
+          <status>HTTP/1.1 404 Not Found</status>
+        </propstat>
+      </response>
+    {% endfor %}
+  {% endif %}
+</multistatus>

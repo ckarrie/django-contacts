@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "django-contacts"
+version = "0.0.1"
+authors = [
+  { name="Christian Karrié", email="ckarrie@gmail.com" },
+]
+description = "Django Contacts App"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+  'bcrypt',
+  'django',
+  'google-api-python-client',
+  'google-auth-httplib2',
+  'google-auth-oauthlib',
+  'vobject',
+  'pillow'
+]
+
+[project.urls]
+Homepage = "https://github.com/ckarrie/django-contacts"
+Issues = "https://github.com/ckarrie/django-contacts/issues"

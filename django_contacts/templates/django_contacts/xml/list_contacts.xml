@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<multistatus
+	xmlns="DAV:"
+	xmlns:CR="urn:ietf:params:xml:ns:carddav">
+  {% for contact in contacts %}
+	<response>
+		<href>{{ url_path }}contact-{{ contact.pk }}.vcf</href>
+		<propstat>
+			<prop>
+				<getetag>"contact-{{ contact.pk }}"</getetag>
+				<CR:address-data>{{ contact.as_vcf_rendered }}</CR:address-data>
+			</prop>
+			<status>HTTP/1.1 200 OK</status>
+		</propstat>
+	</response>
+  {% endfor %}
+</multistatus>
