@@ -1,3 +1,4 @@
+import vobject
 from django.http import HttpResponse
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
@@ -9,7 +10,7 @@ from lxml import etree
 from . import models
 
 
-LIMIT_CONTACTS = 50
+LIMIT_CONTACTS = None
 
 
 class CardDAVView(generic.View):
@@ -36,7 +37,9 @@ class CardDAVView(generic.View):
         contacts = []
         addressbook = models.AddressBook.objects.get(pk=kwargs['pk'])
         if has_getctag:
-            contacts = addressbook.get_persons()[:LIMIT_CONTACTS]
+            contacts = addressbook.get_persons()
+            if LIMIT_CONTACTS:
+                contacts = contacts[:LIMIT_CONTACTS]
 
         xml = render_to_string('django_contacts/xml/multistatus.xml', context={
             'has_resourcetype': bool(has_resourcetype),
@@ -73,7 +76,9 @@ class CardDAVView(generic.View):
 
         contacts = []
         if need_getetag:
-            contacts = addressbook.get_persons()[:LIMIT_CONTACTS]
+            contacts = addressbook.get_persons()
+            if LIMIT_CONTACTS:
+                contacts = contacts[:LIMIT_CONTACTS]
 
         for contact in contacts:
             contact.as_vcf_rendered = contact.as_vcf_serialized(absolute_uri=request.build_absolute_uri())
@@ -87,6 +92,23 @@ class CardDAVView(generic.View):
 
         print(xml)
         resp = HttpResponse(content=xml, content_type='application/xml; charset=utf-8', status=207)
+        return resp
+
+
+class CardDAVContactView(generic.View):
+    http_method_names = ['put']
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CardDAVContactView, self).dispatch(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        print(kwargs)
+        print("CardDAVContactView.put request\n", request.body.decode())
+        # content ist eine vcard
+        vcard = vobject.readOne(request.body.decode())
+        print(vcard)
+        resp = HttpResponse(content=b"", content_type='application/v-card; charset=utf-8', status=200)
         return resp
 
 

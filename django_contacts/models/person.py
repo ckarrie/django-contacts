@@ -8,6 +8,11 @@ from django.utils.translation import gettext as _
 
 class Phone(models.Model):
     phone_number = models.CharField(unique=True, max_length=70)
+    phone_type = models.CharField(max_length=20, choices=(
+        ('work', _('Work')),
+        ('home', _('Home')),
+        ('pager', _('Pager')),
+    ), default='work')
 
     def __str__(self):
         return self.phone_number
@@ -88,12 +93,20 @@ class Person(models.Model):
     photo = models.ImageField(_('photo'), upload_to='contacts/person/',
                               blank=True)
     photo_url = models.URLField(null=True, blank=True)
+    photo_base64 = models.TextField(null=True, blank=True)
     google_resource_name = models.CharField(max_length=255, null=True, blank=True, editable=False)
     birthday = models.DateField(null=True, blank=True)
 
     def photo_to_base64(self):
-        if self.photo_url:
-            return base64.b64encode(urlopen(self.photo_url).read())
+        if not self.photo_base64:
+            if self.photo_url:
+                b64 = base64.b64encode(urlopen(self.photo_url).read())
+                self.photo_base64 = b64.decode('utf-8')
+                self.save()
+        photo_base64 = self.photo_base64
+        if photo_base64:
+            return photo_base64.encode()
+        return b""
 
     def __str__(self):
         if self.first_name and self.last_name:
@@ -115,6 +128,12 @@ class Person(models.Model):
         return 'none.png'
 
     def as_vcf(self, absolute_uri=None):
+        """
+        see https://datatracker.ietf.org/doc/html/rfc6350#page-29
+
+        :param absolute_uri:
+        :return:
+        """
         data = {
             'N': f'{self.last_name};{self.first_name}',  # N:<Nachname>;<Vorname>;<zusätzliche Vornamen>;<Präfix>;<Suffix>
             'FN': str(self),
@@ -124,10 +143,10 @@ class Person(models.Model):
         }
 
         for phonecon in self.personphoneconnection_set.filter(phone__phone_number__isnull=False):
-            data[f'TEL;VALUE=uri;TYPE={phonecon.usage.text}'] = f'tel:{phonecon.phone.phone_number}'
+            data[f'TEL;VALUE=uri;TYPE={phonecon.usage.text.lower()}'] = f'tel:{phonecon.phone.phone_number}'
 
         for emailcon in self.personemailconnection_set.filter(email__email__isnull=False):
-            data[f'EMAIL;TYPE={emailcon.usage.text}'] = emailcon.email.email
+            data[f'EMAIL;TYPE={emailcon.usage.text.lower()}'] = emailcon.email.email
 
         if self.nickname:
             data['NICKNAME'] = self.nickname
